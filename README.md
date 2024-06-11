@@ -22,6 +22,7 @@ For the UI
 For the express server
   - `cd server .\server\`
   - Install dependencies: `npm install`
+  - Install dependencies: `npm i express stripe dotenv`
   - Start local server: `nodemon app.js`
 
 - ## Project Structure
