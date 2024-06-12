@@ -1,59 +1,159 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { MetaData } from '../../components/Meta/MetaData';
+import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import './Join.css';
 import Loading from '../../components/Loading/Loading';
-import StripeCheckout from 'react-stripe-checkout';
-import StripeContainer from '../../components/Payment/StripeContainer';
+import { useUserInfo } from '../../components/User/UserInfo';
+import { products } from '../../components/Products/Products';
 
 const Membership = () => {
-	//product detail
-	const [product, setProduct] = useState({
-		name: 'Full year membership',
-		price: 35,
-	});
+	const stripe = useStripe();
+	const elements = useElements();
 
-	const makePayment = (token) => {
-		const body = {
-			token,
-			product,
-		};
-		const headers = {
-			'Content-Type': 'application/json',
-		};
-		return fetch(`http://localhost:4000/payment`, {
-			method: 'POST',
-			headers,
-			body: JSON.stringify(body)
-		}).then(response => {
-			console.log('RESPONSE ', response);
-			const { status } = response;
-			console.log('STATUS ', status);
-		})
-			.catch(error => console.log(error));
-	}
+	const { userInfo, handleInputChange } = useUserInfo(); // Use useCustomerInfo hook
 
+	const [loading, setLoading] = useState(false);
+	const [successMessage, setSuccessMessage] = useState('');
+
+	const [selectedProduct, setSelectedProduct] = useState(products[0]);
+
+	const handleSubmit = async (event) => {
+		event.preventDefault();
+
+		if (!stripe || !elements) {
+			return;
+		}
+
+		setLoading(true); // Start loading
+
+		try {
+			const cardElement = elements.getElement(CardElement);
+			const { token, error } = await stripe.createToken(cardElement);
+
+			if (error) {
+				throw new Error(`Error creating token: ${error.message}`);
+			}
+
+			const body = {
+				token,
+				product: selectedProduct,
+				userInfo,
+			};
+
+			const response = await fetch('http://localhost:4000/payment', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+			});
+
+			if (!response.ok) {
+				throw new Error(`Network response was not ok: ${response.statusText}`);
+			}
+
+			const responseData = await response.json(); // Parse the JSON response
+			console.log(responseData.message); // Access the message property of the parsed JSON
+			setSuccessMessage(responseData.message); // Set the success message based on the parsed JSON
+		} catch (error) {
+			console.error('Payment error:', error);
+			setSuccessMessage('Payment failed. Please try again.');
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const meta = {
 		title: 'Join Us - APM',
-		desc: 'Join our organization!.',
+		desc: 'Join our organization!',
 		url: 'https://uhapm.org/join',
 	};
 
 	return (
 		<div>
 			<MetaData {...meta} />
-			<Suspense fallback = {<Loading />}>
-				<StripeCheckout
-					stripeKey = 'pk_test_51PQWsvRtKCLSPpaJyEpXRenofqGyD4zbYZlMbXzo13kxTU4FrRTy9tlWlyQj8rGyXQQjXAAEQWB0Ai2LWZosnWLW00tzSpk299'
-					token = {makePayment}
-					name = 'APM PAYMENT'
-					ammount = {product.price * 100} //Price in dollars
-				>
-					<button>Give Ruldof money for Jones</button>
-				</StripeCheckout>
-				{/* <StripeContainer /> */}
-			</Suspense>
+			<div>
+				<h2>Enter Your Information</h2>
+				<form onSubmit={handleSubmit}>
+					<label>
+						First Name:
+						<input
+							type='text'
+							name='firstName'
+							value={userInfo.firstName}
+							onChange={handleInputChange}
+							required
+						/>
+					</label>
+					<br />
+					<label>
+						Last Name:
+						<input
+							type='text'
+							name='lastName'
+							value={userInfo.lastName}
+							onChange={handleInputChange}
+							required
+						/>
+					</label>
+					<br />
+					<label>
+						Email:
+						<input
+							type='email'
+							name='email'
+							value={userInfo.email}
+							onChange={handleInputChange}
+							required
+						/>
+					</label>
+					<br />
+					<label>
+						Phone Number:
+						<input
+							type='tel'
+							name='phone'
+							value={userInfo.phone}
+							onChange={handleInputChange}
+							required
+						/>
+					</label>
+					<br />
+					<label>
+						UHID:
+						<input
+							type='text'
+							name='uhid'
+							value={userInfo.uhid}
+							onChange={handleInputChange}
+							required
+						/>
+					</label>
+					<br />
+					<h2>Select a Product</h2>
+					<select
+						value={selectedProduct.id}
+						onChange={(e) => setSelectedProduct(products.find((p) => p.id === parseInt(e.target.value)))
+						}
+					>
+						{products.map((product) => (
+							<option key={product.id} value={product.id}>
+								{product.name} - ${product.price}
+							</option>
+						))}
+					</select>
+					<br />
+					<h2>Card Details</h2>
+					<CardElement />
+					<br />
+					<button type='submit' disabled={!stripe || loading}>
+						{loading ? <Loading /> : 'Proceed to Payment'}
+					</button>
+				</form>
+				{successMessage && <div className='success-message'>{successMessage}</div>}
+			</div>
 		</div>
 	);
 };
+
 export default Membership;

@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import FourOFour from './components/404/FourOFour';
 import Loading from './components/Loading/Loading';
 import { initialize } from './utils/reactGA';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 const NavBar = lazy(() => import('./components/Navbar/Navbar'));
 const Footer = lazy(() => import('./components/Footer/Footer'));
@@ -16,6 +18,7 @@ const Join = lazy(() => import('./pages/Join/Join'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
 const queryClient = new QueryClient();
+const stripePromise = loadStripe('pk_test_51PQWsvRtKCLSPpaJyEpXRenofqGyD4zbYZlMbXzo13kxTU4FrRTy9tlWlyQj8rGyXQQjXAAEQWB0Ai2LWZosnWLW00tzSpk299');
 
 const App = () => {
 	initialize();
@@ -25,15 +28,17 @@ const App = () => {
 				<Suspense fallback={<Loading />}>
 					<ScrollTop />
 					<NavBar />
-					<Routes>
-						<Route path='/' element={<Home />} />
-						<Route path='/about' element={<About />} />
-						<Route path='/join' element={<Join />} />
-						<Route path='/events' element={<Events />} />
-						<Route path='/membership' element={<Membership />} />
-						<Route path='/404' element={<NotFound />} />
-						<Route path='*' element={<FourOFour />} />
-					</Routes>
+					<Elements stripe={stripePromise}>
+						<Routes>
+							<Route path='/' element={<Home />} />
+							<Route path='/about' element={<About />} />
+							<Route path='/join' element={<Join />} />
+							<Route path='/events' element={<Events />} />
+							<Route path='/membership' element={<Membership />} />
+							<Route path='/404' element={<NotFound />} />
+							<Route path='*' element={<FourOFour />} />
+						</Routes>
+					</Elements>
 					<Footer />
 				</Suspense>
 			</Router>
