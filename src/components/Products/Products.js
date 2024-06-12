@@ -1,6 +1,5 @@
 export const products = [
-    { id: 1, name: 'Full year membership', price: 35 },
-    { id: 2, name: 'Semester membership', price: 20 },
-    //haha
-    { id: 3, name: 'One-time donation to Derek', price: 10000 },
+    { id: 1, description: 'Full year membership', amount: 35 },
+    { id: 2, description: 'Semester membership', amount: 20 },
+    { id: 3, description: 'One-time donation to Derek', amount: 100 },
 ];

@@ -11,7 +11,7 @@ export const useUserInfo = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setUserInfo({ ...userInfo, [name]: value });
+        setUserInfo(prevUserInfo => ({ ...prevUserInfo, [name]: value }));
     };
 
     return { userInfo, handleInputChange };

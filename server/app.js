@@ -15,30 +15,26 @@ app.use(bodyParser.json());
 // Route
 app.post('/payment', async (req, res) => {
     const { product, token, userInfo } = req.body;
-    console.log('Received payment request for product:', product.name);
+    console.log('Received payment request for product:', product.description);
 
-    // Ensure userInfo is properly defined before using it
-    if (!userInfo) {
-        return res.status(400).json({ message: 'userInfo is required.' });
-    }
     try {
-        // Create customer
         const customer = await stripe.customers.create({
-            email: userInfo.email,
-            // You can add more customer information here if needed
+            email: token.email,
+            source: token.id,
         });
 
-        // Log customer information
-        console.log('Customer created:', customer);
-        console.log('Customer ID:', customer.id);
-        console.log('Customer Email:', customer.email);
+        const charge = await stripe.charges.create({
+            amount: product.amount * 100,
+            currency: 'usd',
+            customer: customer.id,
+            receipt_email: token.email,
+            description: product.description
+        });
 
-        // You can proceed with payment processing here
-        // haha
-        res.status(200).send('Payment received Thank you now Rudolf can be glaze for the next 3 months!');
+        res.status(200).json({ message: 'Payment received. Thank you now Rudolf can be glazed for the next 3 months!' });
     } catch (err) {
         console.error('Error processing payment:', err.message);
-        res.status(500).json({ message: 'Failed to process payment.' });
+        res.status(500).json({ message: 'An error occurred while processing your payment.' });
     }
 });
 

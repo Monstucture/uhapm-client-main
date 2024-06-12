@@ -2,7 +2,7 @@ import React from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { useUserInfo } from '../context/UserInfoContext'; // Import useUserInfo hook
 import { products } from '../components/Products'; // Import products
-
+//redundance
 const PaymentHandler = ({
     stripe,
     elements,

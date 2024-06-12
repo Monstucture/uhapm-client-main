@@ -39,7 +39,7 @@ const Membership = () => {
 				product: selectedProduct,
 				userInfo,
 			};
-
+			console.log(body);
 			const response = await fetch('http://localhost:4000/payment', {
 				method: 'POST',
 				headers: {
@@ -57,7 +57,7 @@ const Membership = () => {
 			setSuccessMessage(responseData.message); // Set the success message based on the parsed JSON
 		} catch (error) {
 			console.error('Payment error:', error);
-			setSuccessMessage('Payment failed. Please try again.');
+			setSuccessMessage('Payment failed Please try again.');
 		} finally {
 			setLoading(false);
 		}
@@ -131,14 +131,12 @@ const Membership = () => {
 					</label>
 					<br />
 					<h2>Select a Product</h2>
-					<select
-						value={selectedProduct.id}
-						onChange={(e) => setSelectedProduct(products.find((p) => p.id === parseInt(e.target.value)))
-						}
+					<select value={selectedProduct.id} 
+							onChange={(e) => setSelectedProduct(products.find((p) => p.id === parseInt(e.target.value)))}
 					>
 						{products.map((product) => (
 							<option key={product.id} value={product.id}>
-								{product.name} - ${product.price}
+								{product.description} - ${product.amount}
 							</option>
 						))}
 					</select>
@@ -150,6 +148,7 @@ const Membership = () => {
 						{loading ? <Loading /> : 'Proceed to Payment'}
 					</button>
 				</form>
+
 				{successMessage && <div className='success-message'>{successMessage}</div>}
 			</div>
 		</div>
