@@ -1,81 +1,53 @@
-import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js'
-import axios from 'axios'
-import React, { useState } from 'react'
+import React from 'react';
+import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import { useUserInfo } from '../context/UserInfoContext'; // Import useUserInfo hook
+import { products } from '../components/Products'; // Import products
+//redundance
+const PaymentHandler = ({
+    stripe,
+    elements,
+    userInfo,
+    handleInputChange,
+    setLoading,
+    setSuccessMessage,
+}) => {
+    const handleSubmit = async (event) => {
+        event.preventDefault();
 
-
-const CARD_OPTIONS = {
-    iconStyle: 'solid',
-    style: {
-        base: {
-            iconColor: '#000000',
-            color: '#000000',
-            fontWeight: 500,
-            fontFamily: 'Roboto, Open Sans, Segoe UI, sans-serif',
-            fontSize: '16px',
-            fontSmoothing: 'antialiased',
-            ':-webkit-autofill': { color: '#000000' },
-            '::placeholder': { color: '#000000' }
-        },
-        invalid: {
-            iconColor: '#000000',
-            color: '#000000'
+        if (!stripe || !elements) {
+            return;
         }
-    }
-}
 
-export default function PaymentForm() {
-    const [success, setSuccess] = useState(false)
-    const stripe = useStripe()
-    const elements = useElements()
+        setLoading(true);
 
+        const cardElement = elements.getElement(CardElement);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        const { error, paymentMethod } = await stripe.createPaymentMethod({
-            type: 'card',
-            card: elements.getElement(CardElement)
-        })
+        const { token, error } = await stripe.createToken(cardElement);
 
-
-        if (!error) {
-            try {
-                const { id } = paymentMethod
-                const response = await axios.post('http://localhost:4000/payment', {
-                    amount: 1000,
-                    id
-                })
-
-                if (response.data.success) {
-                    console.log('Successful payment')
-                    setSuccess(true)
-                }
-
-            } catch (error) {
-                console.log('Error', error)
-            }
-        } else {
-            console.log(error.message)
+        if (error) {
+            console.error('Error creating token:', error);
+            setLoading(false);
+            return;
         }
-    }
+
+        const body = {
+            token,
+            product: products.find((p) => p.id === selectedProduct.id), // Assuming selectedProduct is available
+            userInfo,
+        };
+
+        // Fetch request send to '/payment'
+        // Handle response and update state 
+    };
 
     return (
-        <>
-            {!success ?
-                <form onSubmit={handleSubmit}>
-                    <fieldset className='FormGroup'>
-                        <div className='FormRow'>
-                            <CardElement options={CARD_OPTIONS} />
-                        </div>
-                    </fieldset>
-                    <button>PAY</button>
-                </form>
-                :
-                <div>
-                    <h2>You just glaze Rudolf for another 3 months congrats this is the best decision of you're life!</h2>
-                </div>
-                //    once the payment success hide the form then display this msg
-            }
+        <form onSubmit={handleSubmit}>
+            {/* Card Element and other form elements */}
+            <button type="submit" disabled={!stripe || loading}>
+                {loading ? <Loading /> : 'Proceed to Payment'}
+            </button>
+        </form>
+    );
+};
 
-        </>
-    )
-}
+export default PaymentHandler;

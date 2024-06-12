@@ -1,52 +1,42 @@
-require('dotenv').config()
+require('dotenv').config();
 
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')('sk_test_51PQWsvRtKCLSPpaJZIPshbGLswOCp4M94XDzFY5pl6echsqqjN6n1xrPGUFZCmltYti6FFakJKwfjEMwMXSmJrZX00jzamBYef'); // Use environment variable for security
 const PORT = process.env.PORT || 4000;
+const bodyParser = require('body-parser');
 
+// Middleware
+app.use(express.json());
+app.use(cors());
+app.use(bodyParser.json());
 
+// Route
+app.post('/payment', async (req, res) => {
+    const { product, token, userInfo } = req.body;
+    console.log('Received payment request for product:', product.description);
 
-// script run in package.json npm run start
+    try {
+        const customer = await stripe.customers.create({
+            email: token.email,
+            source: token.id,
+        });
 
-//middle ware
-app.use(express.json())
-app.use(cors())
-
-
-// store item data wip
-const storeItems = new Map([
-    [1, { priceInCents: 2000, name: "Semester Membership" }],
-    [2, { priceInCents: 3500, name: "Full Year Membership" }],
-])
-
-
-//route
-app.post('/payment', (req, res) => {
-
-    const { product, token } = req.body;
-    console.log('PRODUCT', product);
-    console.log('PRICE', product.price);
-
-    return stripe.customers.create({
-        email: token.email,
-        source: token.id
-    }).then(customers => {
-        stripe.charges.create({
-            //charge product in dollars
-            ammount: product.price * 100,
+        const charge = await stripe.charges.create({
+            amount: product.amount * 100,
             currency: 'usd',
-            customers: customers.id,
+            customer: customer.id,
             receipt_email: token.email,
-            description: `purchase of product.name`
-        }, { idempontencyKey })
-    }).then(result => res.status(200).json(result)).catch(err => console.log(err))
+            description: product.description
+        });
 
-})
+        res.status(200).json({ message: 'Payment received. Thank you now Rudolf can be glazed for the next 3 months!' });
+    } catch (err) {
+        console.error('Error processing payment:', err.message);
+        res.status(500).json({ message: 'An error occurred while processing your payment.' });
+    }
+});
 
-
-//listen
-app.listen(PORT, () => console.log('Server started'));
-
-// app.use('/api/apiRoute', apiRoute));
+// Listen
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
