@@ -18,7 +18,7 @@ const Join = lazy(() => import('./pages/Join/Join'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
 const queryClient = new QueryClient();
-const stripePromise = loadStripe('pk_test_51PQWsvRtKCLSPpaJyEpXRenofqGyD4zbYZlMbXzo13kxTU4FrRTy9tlWlyQj8rGyXQQjXAAEQWB0Ai2LWZosnWLW00tzSpk299');
+const stripePromise = loadStripe('pk_test_51PQWsvRtKCLSPpaJNydw3rHiQ6MHAyzPlmJLOI4CudZb5AbxjqgDzQuhI3smTbNvQrJwrJ7eAirdStpmQJD1FVzq009i1abL8A');
 
 const App = () => {
 	initialize();
