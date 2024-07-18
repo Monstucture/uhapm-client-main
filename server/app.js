@@ -3,9 +3,11 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const stripe = require('stripe')('sk_test_51PQWsvRtKCLSPpaJZIPshbGLswOCp4M94XDzFY5pl6echsqqjN6n1xrPGUFZCmltYti6FFakJKwfjEMwMXSmJrZX00jzamBYef'); // Use environment variable for security
+const stripe = require('stripe')('sk_test_51PQWsvRtKCLSPpaJC5xCpUa2hYnNF5z2WJLEtuJwDizdM6d3UbrhsCQUEELMPafCbIMxYi1lm6AXueYsFM1J3Q1h00dYczoMDs'); // Use environment variable for security
 const PORT = process.env.PORT || 4000;
 const bodyParser = require('body-parser');
+
+const sheets = require('../server/sheet-client.js');
 
 // Middleware
 app.use(express.json());
@@ -15,11 +17,10 @@ app.use(bodyParser.json());
 // Route
 app.post('/payment', async (req, res) => {
     const { product, token, userInfo } = req.body;
-    console.log('Received payment request for product:', product.description);
 
     try {
         const customer = await stripe.customers.create({
-            email: token.email,
+            email: userInfo.email,
             source: token.id,
         });
 
@@ -31,6 +32,19 @@ app.post('/payment', async (req, res) => {
             description: product.description
         });
 
+        //Google sheets
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: '1mlHNqQgSavZbStArYMdJH8IJC-NOdDPXWyg_bdTk370',
+            range: 'Sheet1!A2:E2',
+            insertDataOption: 'INSERT_ROWS',
+            valueInputOption: 'RAW',
+    
+            //Post the body of the data
+            requestBody:{
+                values: [[userInfo.firstName, userInfo.lastName, userInfo.email, userInfo.phone, userInfo.uhid]]
+            }
+        })
+        
         res.status(200).json({ message: 'Payment received. Thank you now Rudolf can be glazed for the next 3 months!' });
     } catch (err) {
         console.error('Error processing payment:', err.message);
